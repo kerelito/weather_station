@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AlertMetric {
+  temperature
+  humidity
+  pressure
+  batteryVoltage
+  rssi
+}
+
+enum AlertOperator {
+  gt
+  gte
+  lt
+  lte
+  eq
+  neq
+}
+
+model Sensor {
+  id              String       @id
+  name            String
+  type            String
+  location        String?
+  latitude        Float?
+  longitude       Float?
+  description     String?
+  deviceTokenHash String?
+  firmwareVersion String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  lastSeenAt      DateTime?
+  isOnline        Boolean      @default(false)
+  measurements    Measurement[]
+  alertRules      AlertRule[]
+  alertEvents     AlertEvent[]
+
+  @@index([isOnline, lastSeenAt(sort: Desc)])
+}
+
+model Measurement {
+  id             String   @id @default(cuid())
+  sensorId       String
+  sensor         Sensor   @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  sensorName     String
+  sensorType     String
+  temperature    Float
+  humidity       Float
+  pressure       Float
+  rssi           Int?
+  batteryVoltage Float?
+  status         String
+  firmwareVersion String?
+  createdAt      DateTime @default(now())
+
+  @@index([sensorId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+}
+
+model AlertRule {
+  id         String        @id @default(cuid())
+  sensorId   String?
+  sensor     Sensor?       @relation(fields: [sensorId], references: [id], onDelete: SetNull)
+  metric     AlertMetric
+  operator   AlertOperator
+  threshold  Float
+  enabled    Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  alertEvents AlertEvent[]
+
+  @@index([sensorId, enabled])
+}
+
+model AlertEvent {
+  id           String      @id @default(cuid())
+  sensorId      String
+  sensor        Sensor      @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  ruleId        String?
+  rule          AlertRule?  @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  message       String
+  metric        AlertMetric
+  value         Float
+  createdAt     DateTime    @default(now())
+  acknowledged  Boolean     @default(false)
+
+  @@index([sensorId, createdAt(sort: Desc)])
+  @@index([acknowledged, createdAt(sort: Desc)])
+}

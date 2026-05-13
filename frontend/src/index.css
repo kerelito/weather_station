@@ -1,0 +1,124 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap");
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #07111e;
+  --bg-elevated: rgba(12, 21, 38, 0.85);
+  --panel: rgba(15, 26, 46, 0.7);
+  --panel-strong: rgba(14, 25, 43, 0.92);
+  --line: rgba(130, 160, 210, 0.18);
+  --text: #ecf4ff;
+  --muted: #96abc9;
+  --accent: #58d5b3;
+  --accent-secondary: #7bc7ff;
+  --warn: #ffb35c;
+  --danger: #ff7d7d;
+  --shadow: 0 24px 80px rgba(3, 9, 21, 0.45);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef4fb;
+  --bg-elevated: rgba(255, 255, 255, 0.78);
+  --panel: rgba(255, 255, 255, 0.75);
+  --panel-strong: rgba(255, 255, 255, 0.94);
+  --line: rgba(59, 89, 136, 0.14);
+  --text: #11213b;
+  --muted: #5c6f8e;
+  --accent: #0fa687;
+  --accent-secondary: #2e8ce2;
+  --warn: #d9851f;
+  --danger: #d75d5d;
+  --shadow: 0 24px 70px rgba(79, 116, 170, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(60, 126, 234, 0.18), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(88, 213, 179, 0.12), transparent 26%),
+    radial-gradient(circle at 50% 100%, rgba(51, 110, 194, 0.18), transparent 35%),
+    linear-gradient(180deg, rgba(7, 17, 30, 1) 0%, rgba(6, 10, 18, 1) 100%);
+  background-color: var(--bg);
+}
+
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(74, 142, 249, 0.14), transparent 28%),
+    radial-gradient(circle at 85% 12%, rgba(40, 185, 155, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(243, 248, 254, 1) 0%, rgba(228, 238, 248, 1) 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: "Sora", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.glass-panel {
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-strong) 100%);
+  backdrop-filter: blur(26px);
+  box-shadow: var(--shadow);
+}
+
+.mesh-border {
+  position: relative;
+}
+
+.mesh-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(123, 199, 255, 0.32), rgba(88, 213, 179, 0.15), transparent);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.recharts-default-tooltip {
+  border: 1px solid var(--line) !important;
+  border-radius: 18px !important;
+  background: var(--panel-strong) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(140, 170, 220, 0.08);
+}
