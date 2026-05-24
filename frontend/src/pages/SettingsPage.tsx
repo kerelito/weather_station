@@ -1,19 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../api/client";
-import { useSettings } from "../app/settings-context";
+import { useSettings } from "../app/use-settings";
+import { EmptyState } from "../components/ui/EmptyState";
 import { GlassPanel } from "../components/ui/GlassPanel";
 import { SectionHeader } from "../components/ui/SectionHeader";
+import { useModeSensors } from "../hooks/useModeSensors";
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
   const settings = useSettings();
-
-  const sensorsQuery = useQuery({
-    queryKey: ["sensors"],
-    queryFn: api.getSensors,
-  });
+  const { sensors } = useModeSensors();
 
   const updateMutation = useMutation({
     mutationFn: ({ id, name, location }: { id: string; name: string; location?: string | null }) =>
@@ -26,12 +24,6 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <SectionHeader
-        eyebrow="Preferences"
-        title="Ustawienia interfejsu i zarządzanie czujnikami"
-        description="Konfiguruj motyw, interwał odświeżania, jednostki i podstawowe metadane urządzeń."
-      />
-
       <div className="grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
         <GlassPanel className="space-y-5 p-6">
           <div>
@@ -42,7 +34,11 @@ export function SettingsPage() {
                   key={value}
                   type="button"
                   onClick={() => settings.setTheme(value)}
-                  className={`rounded-full px-4 py-2 text-sm font-bold ${settings.theme === value ? "bg-[var(--accent)] text-slate-950" : "border border-white/10 bg-white/5"}`}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                    settings.theme === value
+                      ? "border-[color:var(--accent)] bg-[color:var(--accent)] text-[color:var(--bg)]"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)] text-[var(--muted)] hover:bg-[color:var(--surface-subtle)] hover:text-[var(--text)]"
+                  }`}
                 >
                   {value === "dark" ? "Ciemny" : "Jasny"}
                 </button>
@@ -55,7 +51,7 @@ export function SettingsPage() {
             <select
               value={settings.refreshInterval}
               onChange={(event) => settings.setRefreshInterval(Number(event.target.value))}
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
+              className="mt-3 w-full border px-4 py-3 text-sm"
             >
               <option value={10000}>10 sekund</option>
               <option value={30000}>30 sekund</option>
@@ -68,7 +64,7 @@ export function SettingsPage() {
             <select
               value={settings.temperatureUnit}
               onChange={(event) => settings.setTemperatureUnit(event.target.value as "C" | "F")}
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
+              className="mt-3 w-full border px-4 py-3 text-sm"
             >
               <option value="C">Celsiusz</option>
               <option value="F">Fahrenheit</option>
@@ -80,7 +76,7 @@ export function SettingsPage() {
             <select
               value={settings.pressureUnit}
               onChange={(event) => settings.setPressureUnit(event.target.value as "hPa" | "inHg")}
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
+              className="mt-3 w-full border px-4 py-3 text-sm"
             >
               <option value="hPa">hPa</option>
               <option value="inHg">inHg</option>
@@ -89,41 +85,49 @@ export function SettingsPage() {
         </GlassPanel>
 
         <GlassPanel className="p-6">
-          <SectionHeader title="Nazwy i lokalizacje sensorów" description="Szybka administracja czujnikami bezpośrednio z panelu." />
-          <div className="space-y-4">
-            {(sensorsQuery.data ?? []).map((sensor) => (
-              <form
-                key={sensor.id}
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const data = new FormData(event.currentTarget);
-                  updateMutation.mutate({
-                    id: sensor.id,
-                    name: String(data.get("name") ?? sensor.name),
-                    location: String(data.get("location") ?? sensor.location ?? ""),
-                  });
-                }}
-                className="rounded-3xl border border-white/10 bg-white/5 p-4"
-              >
-                <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
-                  <input
-                    name="name"
-                    defaultValue={sensor.name}
-                    className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm"
-                  />
-                  <input
-                    name="location"
-                    defaultValue={sensor.location ?? ""}
-                    className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm"
-                  />
-                  <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-extrabold text-slate-950">
-                    <Save size={16} />
-                    Zapisz
-                  </button>
-                </div>
-              </form>
-            ))}
-          </div>
+          <SectionHeader title="Czujniki" />
+          {sensors.length === 0 ? (
+            <EmptyState
+              title="Brak czujników w tym trybie"
+              description="Gdy pojawią się urządzenia dla wybranego źródła danych, będzie można nimi zarządzać tutaj."
+              icon={<Save size={18} />}
+            />
+          ) : (
+            <div className="space-y-4">
+              {sensors.map((sensor) => (
+                <form
+                  key={sensor.id}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const data = new FormData(event.currentTarget);
+                    updateMutation.mutate({
+                      id: sensor.id,
+                      name: String(data.get("name") ?? sensor.name),
+                      location: String(data.get("location") ?? sensor.location ?? ""),
+                    });
+                  }}
+                  className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
+                >
+                  <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
+                    <input
+                      name="name"
+                      defaultValue={sensor.name}
+                      className="border px-4 py-3 text-sm"
+                    />
+                    <input
+                      name="location"
+                      defaultValue={sensor.location ?? ""}
+                      className="border px-4 py-3 text-sm"
+                    />
+                    <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-lg border border-[color:var(--accent)] bg-[color:var(--accent)] px-4 py-3 text-sm font-medium text-[color:var(--bg)] transition hover:opacity-90">
+                      <Save size={16} />
+                      Zapisz
+                    </button>
+                  </div>
+                </form>
+              ))}
+            </div>
+          )}
         </GlassPanel>
       </div>
     </div>

@@ -10,17 +10,17 @@ export function RangeTabs({
   options: Array<{ label: string; value: string }>;
 }) {
   return (
-    <div className="inline-flex flex-wrap gap-2 rounded-full border border-white/10 bg-white/5 p-2">
+    <div className="inline-flex flex-wrap gap-1 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-subtle)] p-1">
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
           className={cx(
-            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            "rounded-md px-3 py-1.5 text-sm font-medium transition",
             value === option.value
-              ? "bg-[var(--accent)] text-slate-950"
-              : "text-[var(--muted)] hover:bg-white/10 hover:text-[var(--text)]",
+              ? "bg-[color:var(--surface)] text-[color:var(--text)]"
+              : "text-[var(--muted)] hover:text-[var(--text)]",
           )}
         >
           {option.label}

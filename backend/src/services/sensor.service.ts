@@ -82,6 +82,22 @@ export const sensorService = {
     }
   },
 
+  async deleteSensor(id: string) {
+    try {
+      return await prisma.$transaction(async (transaction) => {
+        await transaction.alertRule.deleteMany({
+          where: { sensorId: id },
+        });
+
+        return transaction.sensor.delete({
+          where: { id },
+        });
+      });
+    } catch {
+      throw new AppError("Sensor not found.", 404);
+    }
+  },
+
   async markOffline(staleBefore: Date) {
     const staleSensors = await prisma.sensor.findMany({
       where: {

@@ -23,7 +23,7 @@ float readBatteryVoltage() {
 }
 
 String currentTimestamp() {
-  if (!AppConfig::ENABLE_NTP) {
+  if (!AppConfig::ENABLE_NTP || !AppConfig::SEND_DEVICE_TIMESTAMP) {
     return "";
   }
 

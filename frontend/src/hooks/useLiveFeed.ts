@@ -2,12 +2,15 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { io } from "socket.io-client";
 import { toast } from "sonner";
+import { useSettings } from "../app/use-settings";
+import { matchesSensorIdToMode } from "../lib/data-mode";
 
 const WS_URL = import.meta.env.VITE_WS_URL;
 
 export function useLiveFeed() {
   const queryClient = useQueryClient();
   const [connected, setConnected] = useState(false);
+  const { dataMode } = useSettings();
 
   const onMeasurement = useEffectEvent(() => {
     queryClient.invalidateQueries({ queryKey: ["latest"] });
@@ -16,9 +19,10 @@ export function useLiveFeed() {
     queryClient.invalidateQueries({ queryKey: ["measurements"] });
   });
 
-  const onAlert = useEffectEvent((payload: Array<{ message: string }> | { message: string }) => {
+  const onAlert = useEffectEvent((payload: Array<{ message: string; sensorId: string }> | { message: string; sensorId: string }) => {
     queryClient.invalidateQueries({ queryKey: ["alerts"] });
-    const first = Array.isArray(payload) ? payload[0] : payload;
+    const events = Array.isArray(payload) ? payload : [payload];
+    const first = events.find((event) => matchesSensorIdToMode(event.sensorId, dataMode));
     if (first?.message) {
       toast.warning(first.message);
     }
@@ -44,7 +48,7 @@ export function useLiveFeed() {
     return () => {
       socket.disconnect();
     };
-  }, [onAlert, onMeasurement]);
+  }, []);
 
   return { connected };
 }

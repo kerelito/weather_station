@@ -12,13 +12,15 @@ export function MetricCard({
   title,
   value,
   subtitle,
+  trendLabel,
   icon,
   accent,
   trend,
 }: {
   title: string;
   value: string;
-  subtitle: string;
+  subtitle?: string;
+  trendLabel?: string;
   icon: ReactNode;
   accent: string;
   trend?: Trend;
@@ -27,25 +29,25 @@ export function MetricCard({
 
   return (
     <GlassPanel className="p-5">
-      <motion.div whileHover={{ y: -4 }} className="flex items-start justify-between gap-4">
+      <motion.div whileHover={{ y: -2 }} className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-[var(--muted)]">{title}</p>
-          <h3 className="mt-3 text-3xl font-extrabold">{value}</h3>
-          <p className="mt-2 text-sm text-[var(--muted)]">{subtitle}</p>
+          <p className="text-sm font-medium text-[var(--muted)]">{title}</p>
+          <h3 className="mt-3 text-3xl font-semibold tracking-normal">{value}</h3>
+          {subtitle ? <p className="mt-2 text-sm text-[var(--muted)]">{subtitle}</p> : null}
         </div>
         <div
-          className="rounded-2xl p-3"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-subtle)]"
           style={{
-            background: accent,
+            color: accent,
           }}
         >
           {icon}
         </div>
       </motion.div>
       {trend ? (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[var(--muted)]">
+        <div className="mt-4 inline-flex items-center gap-2 rounded-md border border-[color:var(--border)] bg-[color:var(--surface-subtle)] px-2.5 py-1 text-xs text-[var(--muted)]">
           <TrendIcon size={14} />
-          <span>{trend.delta >= 0 ? "+" : ""}{trend.delta.toFixed(2)} vs poprzedni okres</span>
+          <span>{trend.delta >= 0 ? "+" : ""}{trend.delta.toFixed(2)} {trendLabel ?? "vs poprzednie okno"}</span>
         </div>
       ) : null}
     </GlassPanel>

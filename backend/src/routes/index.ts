@@ -13,10 +13,12 @@ apiRouter.get("/health", healthController.get);
 apiRouter.post("/measurements", requireApiKey, measurementController.create);
 apiRouter.get("/measurements/latest", measurementController.latest);
 apiRouter.get("/measurements", measurementController.list);
+apiRouter.delete("/measurements", measurementController.clear);
 
 apiRouter.get("/sensors", sensorController.list);
 apiRouter.get("/sensors/:id", sensorController.getById);
 apiRouter.patch("/sensors/:id", sensorController.update);
+apiRouter.delete("/sensors/:id", sensorController.remove);
 
 apiRouter.get("/stats", statsController.get);
 

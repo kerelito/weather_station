@@ -5,10 +5,10 @@ export function StatusBadge({ online, live }: { online: boolean; live?: boolean 
   return (
     <div
       className={cx(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
+        "inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-medium",
         online
-          ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
-          : "border-rose-400/30 bg-rose-400/10 text-rose-200",
+          ? "border-[color:var(--border)] bg-[color:var(--surface-subtle)] text-[color:var(--success)]"
+          : "border-[color:var(--border)] bg-[color:var(--surface-subtle)] text-[color:var(--danger)]",
       )}
     >
       {live ? <Activity size={14} /> : online ? <Wifi size={14} /> : <WifiOff size={14} />}

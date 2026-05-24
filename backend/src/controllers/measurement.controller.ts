@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { env } from "../config/env";
 import { measurementService } from "../services/measurement.service";
-import { measurementQuerySchema, measurementSchema } from "../utils/schemas";
+import { measurementClearSchema, measurementQuerySchema, measurementSchema } from "../utils/schemas";
 
 export const measurementController = {
   async create(request: Request, response: Response) {
@@ -28,6 +28,14 @@ export const measurementController = {
       limit: query.limit ?? env.DEFAULT_HISTORY_LIMIT,
       page: query.page ?? 1,
     });
+
+    return response.json(result);
+  },
+
+  async clear(request: Request, response: Response) {
+    const query = measurementClearSchema.parse(request.query);
+    const sensorIds = query.sensorId?.split(",").map((value) => value.trim()).filter(Boolean);
+    const result = await measurementService.clearMeasurements({ sensorIds });
 
     return response.json(result);
   },

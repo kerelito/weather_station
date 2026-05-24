@@ -30,19 +30,13 @@ const payload = `{
 export function ApiDocsPage() {
   return (
     <div className="space-y-8">
-      <SectionHeader
-        eyebrow="API"
-        title="Skrócona dokumentacja endpointów"
-        description="Najważniejsze zasoby REST i przykładowy payload dla stacji ESP32."
-      />
-
       <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
         <GlassPanel className="p-6">
-          <SectionHeader title="Endpointy" description="Podstawowy kontrakt integracyjny dla frontendu, symulatora i firmware." />
+          <SectionHeader title="Endpointy" />
           <div className="space-y-3">
             {endpoints.map(([method, description]) => (
-              <div key={method} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                <p className="font-mono text-sm font-bold text-[var(--accent-secondary)]">{method}</p>
+              <div key={method} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+                <p className="font-mono text-sm font-semibold text-[color:var(--accent)]">{method}</p>
                 <p className="mt-2 text-sm text-[var(--muted)]">{description}</p>
               </div>
             ))}
@@ -50,8 +44,8 @@ export function ApiDocsPage() {
         </GlassPanel>
 
         <GlassPanel className="p-6">
-          <SectionHeader title="Payload z ESP32" description="Format danych wysyłanych przez firmware lub symulator." />
-          <pre className="overflow-x-auto rounded-3xl border border-white/10 bg-black/20 p-5 text-sm text-slate-100">
+          <SectionHeader title="Payload z ESP32" />
+          <pre className="overflow-x-auto rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-subtle)] p-5 text-sm text-[var(--text)]">
             <code>{payload}</code>
           </pre>
         </GlassPanel>

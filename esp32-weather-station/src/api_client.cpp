@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 #include "config.h"
 
@@ -34,7 +35,34 @@ bool sendMeasurement(const SensorReadings& readings, int rssi, float batteryVolt
 
   for (int attempt = 1; attempt <= 3; ++attempt) {
     HTTPClient client;
-    client.begin(AppConfig::BACKEND_URL);
+    const String endpoint = AppConfig::BACKEND_URL;
+    const bool isHttps = endpoint.startsWith("https://");
+
+    if (isHttps) {
+      WiFiClientSecure secureClient;
+
+      if (strlen(AppConfig::TLS_ROOT_CA) > 0) {
+        secureClient.setCACert(AppConfig::TLS_ROOT_CA);
+      } else if (AppConfig::ALLOW_INSECURE_TLS) {
+        secureClient.setInsecure();
+      } else {
+        Serial.println("HTTPS requested but neither TLS_ROOT_CA nor ALLOW_INSECURE_TLS is configured.");
+        return false;
+      }
+
+      if (!client.begin(secureClient, endpoint)) {
+        Serial.println("HTTPClient begin() failed for HTTPS endpoint.");
+        delay(1200);
+        continue;
+      }
+    } else {
+      if (!client.begin(endpoint)) {
+        Serial.println("HTTPClient begin() failed for HTTP endpoint.");
+        delay(1200);
+        continue;
+      }
+    }
+
     client.setConnectTimeout(5000);
     client.addHeader("Content-Type", "application/json");
     client.addHeader("x-api-key", AppConfig::API_KEY);
@@ -43,7 +71,12 @@ bool sendMeasurement(const SensorReadings& readings, int rssi, float batteryVolt
     const int code = client.POST(payload);
 
     if (code > 0) {
+      const String responseBody = client.getString();
       Serial.printf("HTTP response code: %d\n", code);
+      if (code < 200 || code >= 300) {
+        Serial.printf("HTTP request payload: %s\n", payload.c_str());
+        Serial.printf("HTTP response body: %s\n", responseBody.c_str());
+      }
       client.end();
       return code >= 200 && code < 300;
     }

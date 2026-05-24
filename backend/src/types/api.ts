@@ -27,6 +27,10 @@ export type MeasurementQuery = {
   page?: number;
 };
 
+export type MeasurementClearInput = {
+  sensorIds?: string[];
+};
+
 export type SensorUpdatePayload = {
   name?: string;
   location?: string | null;

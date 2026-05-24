@@ -37,6 +37,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(error.message ?? "Request failed.");
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -49,9 +53,20 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+  deleteSensor: (id: string) =>
+    request<void>(`/sensors/${id}`, {
+      method: "DELETE",
+    }),
   getLatestMeasurements: () => request<Sensor[]>("/measurements/latest"),
   getMeasurements: (params: Record<string, QueryValue>) =>
     request<MeasurementResponse>(`/measurements${buildQuery(params)}`),
+  clearMeasurements: (params: Record<string, QueryValue>) =>
+    request<{ deletedMeasurements: number; deletedAlertEvents: number; affectedSensors: number }>(
+      `/measurements${buildQuery(params)}`,
+      {
+        method: "DELETE",
+      },
+    ),
   getStats: (params: Record<string, QueryValue>) => request<StatsResponse>(`/stats${buildQuery(params)}`),
   getAlertRules: () => request<AlertRule[]>("/alerts/rules"),
   createAlertRule: (body: Partial<AlertRule>) =>

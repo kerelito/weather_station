@@ -1,12 +1,12 @@
 import { Activity, BellRing, ChartColumn, Database, Home, Settings2 } from "lucide-react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLiveFeed } from "../../hooks/useLiveFeed";
 import { cx } from "../../lib/format";
-import { useSettings } from "../../app/settings-context";
+import { useSettings } from "../../app/use-settings";
 import { StatusBadge } from "../ui/StatusBadge";
 
 const navigation = [
-  { to: "/dashboard", label: "Dashboard", icon: Home },
+  { to: "/", label: "Dashboard", icon: Home },
   { to: "/charts", label: "Wykresy", icon: ChartColumn },
   { to: "/measurements", label: "Pomiary", icon: Database },
   { to: "/alerts", label: "Alerty", icon: BellRing },
@@ -15,19 +15,28 @@ const navigation = [
 
 export function AppShell() {
   const { connected } = useLiveFeed();
-  const { theme, setTheme } = useSettings();
+  const { dataMode, setDataMode, theme, setTheme } = useSettings();
+  const { pathname } = useLocation();
+
+  const pageTitle =
+    pathname === "/" ? "Dashboard"
+      : pathname.startsWith("/charts") ? "Wykresy"
+      : pathname.startsWith("/measurements") ? "Pomiary"
+      : pathname.startsWith("/alerts") ? "Alerty"
+      : pathname.startsWith("/settings") ? "Ustawienia"
+      : pathname.startsWith("/api-docs") ? "API"
+      : pathname.startsWith("/sensors") ? "Czujnik"
+      : "Weather Station";
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
-        <aside className="glass-panel mesh-border sticky top-4 hidden h-[calc(100vh-2rem)] rounded-[32px] p-5 lg:flex lg:flex-col">
-          <Link to="/" className="rounded-[26px] border border-white/10 bg-white/5 p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent-secondary)]">Weather Station</p>
-            <h1 className="mt-3 text-2xl font-black">Control Center</h1>
-            <p className="mt-2 text-sm text-[var(--muted)]">Nowoczesny pulpit do monitoringu pogody, urządzeń i alertów.</p>
+      <div className="mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 lg:grid-cols-[236px_minmax(0,1fr)]">
+        <aside className="sticky top-0 hidden h-screen border-r border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-5 lg:flex lg:flex-col">
+          <Link to="/" className="px-2 py-2">
+            <h1 className="text-lg font-semibold tracking-normal">Weather Station</h1>
           </Link>
 
-          <nav className="mt-6 flex flex-1 flex-col gap-2">
+          <nav className="mt-6 flex flex-1 flex-col gap-1">
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
@@ -36,10 +45,10 @@ export function AppShell() {
                   to={item.to}
                   className={({ isActive }) =>
                     cx(
-                      "group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition",
+                      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
                       isActive
-                        ? "bg-white/10 text-[var(--text)]"
-                        : "text-[var(--muted)] hover:bg-white/6 hover:text-[var(--text)]",
+                        ? "bg-[color:var(--surface-subtle)] text-[var(--text)]"
+                        : "text-[var(--muted)] hover:bg-[color:var(--surface-subtle)] hover:text-[var(--text)]",
                     )
                   }
                 >
@@ -50,34 +59,80 @@ export function AppShell() {
             })}
           </nav>
 
-          <div className="rounded-[26px] border border-white/10 bg-white/5 p-5">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-subtle)] p-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--muted)]">Kanał live</p>
+              <p className="text-sm font-semibold text-[var(--muted)]">Live</p>
               <StatusBadge online={connected} live />
             </div>
-            <p className="mt-3 text-sm text-[var(--muted)]">Socket.IO utrzymuje dashboard zsynchronizowany z backendem bez odświeżania strony.</p>
           </div>
         </aside>
 
         <div className="min-w-0">
-          <header className="glass-panel mesh-border mb-6 flex flex-col gap-4 rounded-[28px] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent-secondary)]">Live Operations</p>
-              <h2 className="mt-2 text-2xl font-black">Monitoring środowiska w czasie rzeczywistym</h2>
+          <header className="sticky top-0 z-10 mb-8 border-b border-[color:var(--border)] bg-[color:var(--bg)] px-4 py-4 lg:px-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold tracking-normal">{pageTitle}</h2>
+                <p className="mt-1 text-sm text-[var(--muted)]">{dataMode === "demo" ? "Dane demo" : "Dane z czujników"}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="inline-flex items-center gap-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm font-medium text-[var(--text)]">
+                  <span className={cx("transition", dataMode === "demo" ? "text-[var(--muted)]" : "text-[var(--text)]")}>Real</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={dataMode === "demo"}
+                    aria-label="Przełącz tryb demo"
+                    onClick={() => setDataMode(dataMode === "demo" ? "real" : "demo")}
+                    className={cx(
+                      "relative h-6 w-11 rounded-full border border-[color:var(--border)] transition",
+                      dataMode === "demo" ? "bg-[var(--accent)]" : "bg-[color:var(--surface-muted)]",
+                    )}
+                  >
+                    <span
+                      className={cx(
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-[color:var(--surface)] transition",
+                        dataMode === "demo" ? "left-5" : "left-0.5",
+                      )}
+                    />
+                  </button>
+                  <span className={cx("transition", dataMode === "demo" ? "text-[var(--text)]" : "text-[var(--muted)]")}>Demo</span>
+                </label>
+                <StatusBadge online={connected} live />
+                <button
+                  type="button"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm font-medium text-[var(--text)] transition hover:bg-[color:var(--surface-subtle)]"
+                >
+                  <Activity size={16} />
+                  {theme === "dark" ? "Tryb jasny" : "Tryb ciemny"}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <StatusBadge online={connected} live />
-              <button
-                type="button"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-white/10"
-              >
-                <Activity size={16} />
-                {theme === "dark" ? "Tryb jasny" : "Tryb ciemny"}
-              </button>
-            </div>
+
+            <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cx(
+                        "inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition",
+                        isActive
+                          ? "border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[var(--text)]"
+                          : "border-[color:var(--border)] bg-[color:var(--surface)] text-[var(--muted)]",
+                      )
+                    }
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </nav>
           </header>
-          <main className="pb-8">
+          <main className="px-4 pb-10 lg:px-8">
             <Outlet />
           </main>
         </div>

@@ -1,39 +1,57 @@
 import { useQuery } from "@tanstack/react-query";
-import { BatteryCharging, MapPin, RadioTower, Thermometer } from "lucide-react";
+import { BatteryCharging, Gauge, MapPin, RadioTower, Thermometer, Waves } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
-import { useSettings } from "../app/settings-context";
+import { useSettings } from "../app/use-settings";
 import { ClimateChart } from "../components/charts/ClimateChart";
+import { EmptyState } from "../components/ui/EmptyState";
 import { GlassPanel } from "../components/ui/GlassPanel";
 import { MetricCard } from "../components/ui/MetricCard";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { matchesSensorIdToMode } from "../lib/data-mode";
 import { formatHumidity, formatPressure, formatRelative, formatRssi, formatTemperature, formatVoltage } from "../lib/format";
 
 export function SensorDetailPage() {
   const { id = "" } = useParams();
   const settings = useSettings();
+  const sensorMatchesMode = Boolean(id) && matchesSensorIdToMode(id, settings.dataMode);
 
   const sensorQuery = useQuery({
-    queryKey: ["sensor", id],
+    queryKey: ["sensor", id, settings.dataMode],
     queryFn: () => api.getSensor(id),
-    enabled: Boolean(id),
+    enabled: sensorMatchesMode,
   });
 
   const measurementsQuery = useQuery({
-    queryKey: ["measurements", "sensor-detail", id],
+    queryKey: ["measurements", "sensor-detail", id, settings.dataMode],
     queryFn: () => api.getMeasurements({ sensorId: id, interval: "1h", limit: 240 }),
-    enabled: Boolean(id),
+    enabled: sensorMatchesMode,
   });
 
   const sensor = sensorQuery.data;
 
+  if (!sensorMatchesMode) {
+    return (
+      <div className="space-y-8">
+      <SectionHeader
+        title="Szczegóły czujnika"
+        description="Widok pojedynczego urządzenia jest dostępny tylko dla sensorów z aktywnego trybu danych."
+      />
+        <EmptyState
+          title="Czujnik nie należy do tego trybu"
+          description="Przełącz demo lub wróć do listy urządzeń z aktualnie wybranego źródła danych."
+          icon={<Thermometer />}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <SectionHeader
-        eyebrow="Sensor"
         title={sensor?.name ?? "Szczegóły czujnika"}
-        description={sensor?.description ?? "Podgląd stanu, historii i jakości połączenia dla pojedynczego urządzenia."}
+        description={sensor?.description ?? undefined}
       />
 
       <GlassPanel className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between">
@@ -55,36 +73,36 @@ export function SensorDetailPage() {
           title="Temperatura"
           value={formatTemperature(sensor?.latestMeasurement?.temperature, settings)}
           subtitle="Aktualny odczyt"
-          icon={<Thermometer className="text-white" />}
-          accent="linear-gradient(135deg,#ff8a62,#ffb76f)"
+          icon={<Thermometer size={18} />}
+          accent="var(--temp)"
           trend={sensor?.stats?.temperature?.trend}
         />
         <MetricCard
           title="Wilgotność"
           value={formatHumidity(sensor?.latestMeasurement?.humidity)}
           subtitle="Aktualny odczyt"
-          icon={<BatteryCharging className="text-white" />}
-          accent="linear-gradient(135deg,#49b6ff,#75d2ff)"
+          icon={<Waves size={18} />}
+          accent="var(--humidity)"
           trend={sensor?.stats?.humidity?.trend}
         />
         <MetricCard
           title="Ciśnienie"
           value={formatPressure(sensor?.latestMeasurement?.pressure, settings)}
           subtitle="Aktualny odczyt"
-          icon={<RadioTower className="text-white" />}
-          accent="linear-gradient(135deg,#5fd0aa,#77efcf)"
+          icon={<Gauge size={18} />}
+          accent="var(--pressure)"
           trend={sensor?.stats?.pressure?.trend}
         />
       </div>
 
       <GlassPanel className="p-6">
-        <SectionHeader title="Historia sensora" description="Wykres godzinowy dla wybranego urządzenia." />
+        <SectionHeader title="Historia" />
         <ClimateChart
           data={(measurementsQuery.data?.data ?? []).map((item) => ({
             createdAt: item.createdAt,
             temperature: item.temperature,
           }))}
-          series={[{ key: "temperature", label: "Temperatura", color: "#7bc7ff" }]}
+          series={[{ key: "temperature", label: "Temperatura", color: "var(--temp)" }]}
         />
       </GlassPanel>
     </div>

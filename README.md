@@ -170,11 +170,24 @@ cd simulator
 npm run dev
 ```
 
+Przy pierwszym uruchomieniu symulator automatycznie dośle historię z ostatnich 3 miesięcy:
+
+- z profilem sezonowym i dobowym dopasowanym do warunków w Polsce,
+- z gęstszymi danymi dla ostatnich 48 godzin,
+- a po zakończeniu backfillu przejdzie w dalszą symulację live.
+
 Możesz też przekazać argumenty CLI:
 
 ```bash
 npm run dev -- --sensorCount=5 --intervalMs=3000 --backendUrl=http://localhost:4000/api/measurements --apiKey=dev-weather-key
 ```
+
+Opcjonalne parametry:
+
+- `--timezone=Europe/Warsaw`
+- `--historyMonths=3`
+- `--historyBatchSize=12`
+- `--skipHistory=true`
 
 ## Frontend
 

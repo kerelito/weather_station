@@ -34,6 +34,10 @@ export const measurementQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
 });
 
+export const measurementClearSchema = z.object({
+  sensorId: z.string().optional(),
+});
+
 export const sensorUpdateSchema = z
   .object({
     name: z.string().min(2).max(80).optional(),

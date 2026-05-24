@@ -18,4 +18,9 @@ export const sensorController = {
     const sensor = await sensorService.updateSensor(String(request.params.id), payload);
     return response.json(sensor);
   },
+
+  async remove(request: Request, response: Response) {
+    await sensorService.deleteSensor(String(request.params.id));
+    return response.status(204).send();
+  },
 };

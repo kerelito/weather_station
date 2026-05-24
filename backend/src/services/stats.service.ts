@@ -88,7 +88,7 @@ export const statsService = {
             sensorId: sensor.id,
             metric: "temperature",
             value: latest.temperature,
-            message: "Temperatura odbiega od typowego profilu ostatniego okresu.",
+            message: "Temperatura odbiega od średniego profilu z ostatnich 24 godzin.",
           };
         }
 

@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { getIo } from "../lib/socket";
-import type { MeasurementPayload, MeasurementQuery } from "../types/api";
+import type { MeasurementClearInput, MeasurementPayload, MeasurementQuery } from "../types/api";
 import { aggregateMeasurements } from "../utils/metrics";
 import { alertService } from "./alert.service";
 
@@ -99,6 +99,7 @@ export const measurementService = {
   async getMeasurements(query: MeasurementQuery) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 500;
+    const interval = query.interval ?? "raw";
     const where = {
       sensorId: parseSensorIds(query.sensorIds),
       createdAt: {
@@ -107,19 +108,43 @@ export const measurementService = {
       },
     };
 
-    const [total, measurements] = await Promise.all([
-      prisma.measurement.count({ where }),
-      prisma.measurement.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
+    if (interval === "raw") {
+      const [total, measurements] = await Promise.all([
+        prisma.measurement.count({ where }),
+        prisma.measurement.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]);
 
-    const chronological = [...measurements].reverse();
-    const interval = query.interval ?? "raw";
-    const data = aggregateMeasurements(chronological, interval);
+      const chronological = [...measurements].reverse();
+      const data = aggregateMeasurements(chronological, interval);
+
+      return {
+        data,
+        meta: {
+          total,
+          page,
+          limit,
+          interval,
+          count: data.length,
+        },
+      };
+    }
+
+    // Aggregate first, then paginate the resulting buckets so charts receive
+    // the latest full time window instead of a single bucket built from the last N raw rows.
+    const measurements = await prisma.measurement.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+    });
+    const aggregated = aggregateMeasurements(measurements, interval);
+    const total = aggregated.length;
+    const end = Math.max(0, total - (page - 1) * limit);
+    const start = Math.max(0, end - limit);
+    const data = aggregated.slice(start, end);
 
     return {
       data,
@@ -130,6 +155,69 @@ export const measurementService = {
         interval,
         count: data.length,
       },
+    };
+  },
+
+  async clearMeasurements(input: MeasurementClearInput) {
+    const sensorIds = input.sensorIds?.length
+      ? input.sensorIds
+      : (
+          await prisma.sensor.findMany({
+            select: { id: true },
+          })
+        ).map((sensor) => sensor.id);
+
+    if (sensorIds.length === 0) {
+      return {
+        sensorIds: [],
+        deletedMeasurements: 0,
+        deletedAlertEvents: 0,
+        affectedSensors: 0,
+      };
+    }
+
+    const [deletedAlertEvents, deletedMeasurements, updatedSensors] = await prisma.$transaction([
+      prisma.alertEvent.deleteMany({
+        where: {
+          sensorId: {
+            in: sensorIds,
+          },
+        },
+      }),
+      prisma.measurement.deleteMany({
+        where: {
+          sensorId: {
+            in: sensorIds,
+          },
+        },
+      }),
+      prisma.sensor.updateMany({
+        where: {
+          id: {
+            in: sensorIds,
+          },
+        },
+        data: {
+          isOnline: false,
+          lastSeenAt: null,
+        },
+      }),
+    ]);
+
+    getIo().emit(
+      "sensor:status",
+      sensorIds.map((sensorId) => ({
+        sensorId,
+        isOnline: false,
+        lastSeenAt: null,
+      })),
+    );
+
+    return {
+      sensorIds,
+      deletedMeasurements: deletedMeasurements.count,
+      deletedAlertEvents: deletedAlertEvents.count,
+      affectedSensors: updatedSensors.count,
     };
   },
 };
