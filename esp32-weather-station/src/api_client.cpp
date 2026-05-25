@@ -35,12 +35,12 @@ bool sendMeasurement(const SensorReadings& readings, int rssi, float batteryVolt
 
   for (int attempt = 1; attempt <= 3; ++attempt) {
     HTTPClient client;
+    WiFiClient plainClient;
+    WiFiClientSecure secureClient;
     const String endpoint = AppConfig::BACKEND_URL;
     const bool isHttps = endpoint.startsWith("https://");
 
     if (isHttps) {
-      WiFiClientSecure secureClient;
-
       if (strlen(AppConfig::TLS_ROOT_CA) > 0) {
         secureClient.setCACert(AppConfig::TLS_ROOT_CA);
       } else if (AppConfig::ALLOW_INSECURE_TLS) {
@@ -56,7 +56,7 @@ bool sendMeasurement(const SensorReadings& readings, int rssi, float batteryVolt
         continue;
       }
     } else {
-      if (!client.begin(endpoint)) {
+      if (!client.begin(plainClient, endpoint)) {
         Serial.println("HTTPClient begin() failed for HTTP endpoint.");
         delay(1200);
         continue;

@@ -420,7 +420,11 @@ export function ChartsPage() {
                 <MetricRange label="Wilgotność" metric="humidity" summary={daySummary.humidity} settings={settings} />
                 <MetricRange label="Ciśnienie" metric="pressure" summary={daySummary.pressure} settings={settings} />
               </div>
-              <DailySensorChart data={daySummary.points} metric={selectedMetric} />
+              <DailySensorChart
+                data={daySummary.points}
+                expectedInterval={getInterval("day", dataMode)}
+                metric={selectedMetric}
+              />
             </>
           )}
         </GlassPanel>

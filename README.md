@@ -45,6 +45,12 @@ Dockerfile
 README.md
 ```
 
+## Pełna analiza projektu
+
+Rozszerzone opracowanie techniczno-funkcjonalne systemu znajduje się w pliku:
+
+- [docs/system-analysis.md](docs/system-analysis.md)
+
 ## Backend API
 
 ### Najważniejsze endpointy
